@@ -2,7 +2,7 @@
 'use client'; // Context Providerはクライアントコンポーネントである必要がある
 
 import { createContext, useContext, useEffect, useState, ReactNode } from 'react';
-import { getAuth, onAuthStateChanged, User } from 'firebase/auth';
+import { onAuthStateChanged, User } from 'firebase/auth';
 import { auth } from '@/lib/firebase'; // firebase.ts から auth をインポート
 
 interface AuthContextType {

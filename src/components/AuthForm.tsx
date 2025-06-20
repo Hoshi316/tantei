@@ -2,7 +2,7 @@
 'use client';
 
 import { useState } from 'react';
-import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword } from 'firebase/auth';
+import { createUserWithEmailAndPassword, signInWithEmailAndPassword } from 'firebase/auth';
 import { auth } from '@/lib/firebase'; // src/lib/firebase.ts から auth をインポート
 import { useRouter } from 'next/navigation'; // ログイン後にリダイレクトするために必要
 
