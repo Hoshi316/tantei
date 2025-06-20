@@ -46,7 +46,7 @@ export default function MainAppPage() {
     if (conversation === null && step === 0) {
       setConversation({ type: 'question', text: questions[0] });
     }
-  }, [step])
+  }, [step,conversation])
 
   const handleSubmit = async () => {
     if (!input.trim()) return

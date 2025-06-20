@@ -18,29 +18,37 @@ export default function CaseNotebook() { // ★★★ propsからcasesを削除 
   const [loadingCases, setLoadingCases] = useState(false)
 
   useEffect(() => {
+    let unsubscribe: NodeJS.Timeout | null = null;
+
     const fetchCases = async () => {
       if (!user) return;
-      setLoadingCases(true)
+      setLoadingCases(true);
       try {
         const q = query(
-          collection(db, 'cases'), 
+          collection(db, 'cases'),
           where('userId', '==', user.uid),
           orderBy('createdAt', 'desc')
-        )
-        const snapshot = await getDocs(q)
-        const items = snapshot.docs.map(doc => doc.data() as CaseData)
-        setCases(items)
+        );
+        const snapshot = await getDocs(q);
+        const items = snapshot.docs.map(doc => doc.data() as CaseData);
+        setCases(items);
       } catch (error) {
-        console.error('事件簿データの取得に失敗しました:', error)
+        console.error('事件簿データの取得に失敗しました:', error);
       } finally {
-        setLoadingCases(false)
+        setLoadingCases(false);
       }
-    }
+    };
 
     if (showNotebook) {
-      fetchCases() // showNotebook が true になったらデータをフェッチ
+      fetchCases(); // 初回取得
+      unsubscribe = setInterval(fetchCases, 3000); // 3秒ごとに再取得
     }
-  }, [showNotebook, user])
+
+    return () => {
+      if (unsubscribe) clearInterval(unsubscribe);
+    };
+  }, [showNotebook, user]);
+
 
   return (
     <>
