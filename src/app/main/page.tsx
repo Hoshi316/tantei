@@ -1,3 +1,6 @@
+//tantei-rho.vercel.app
+
+
 // src/app/main/page.tsx
 'use client'
 
@@ -11,7 +14,8 @@ import Link from 'next/link'
 import Image from 'next/image' // Image コンポーネントをインポート
 import { useRouter } from 'next/navigation'
 import { useAuth } from '@/context/AuthContext'
-
+import { auth } from '@/lib/firebase' // ★★★ auth をインポート ★★★
+import { signOut } from 'firebase/auth' // ★★★ signOut をインポート ★★★
 
 const questions = [
   '何を失くしましたか？',
@@ -210,6 +214,19 @@ export default function MainAppPage() {
     }
   };
 
+    const handleSignOut = async () => {
+    if (confirm('本当にログアウトしますか？')) {
+      try {
+        await signOut(auth); // Firebase AuthenticationのsignOutメソッドを呼び出す
+        resetAllStates(); // アプリの状態をリセット
+        router.push('/login'); // ログアウト後、ログインページにリダイレクト
+      } catch (error) {
+        console.error('ログアウトエラー:', error);
+        alert('ログアウトに失敗しました。');
+      }
+    }
+  };
+
      // ★★★ ユーザーがログインしていない間はローディング表示 ★★★
   if (loading || !user) {
     return (
@@ -338,6 +355,19 @@ export default function MainAppPage() {
       >
         ◀ ひとつ前に戻る
       </button>
+
+
+      {/* ★★★ ログアウトボタンを追加 ★★★ */}
+      {user && ( // ユーザーがログインしている場合のみ表示
+        <button
+          onClick={handleSignOut}
+          className="text-sm text-gray-500 underline hover:text-orange-500 mt-2 z-20"
+        >
+          🚪 ログアウト
+        </button>
+      )}
+
+      
     </main>
   )
 }
