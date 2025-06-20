@@ -28,11 +28,19 @@ export default function AuthForm() {
         alert('ログインしました！');
       }
       router.push('/main'); // ログインまたは登録が成功したらメインページにリダイレクト
-    } catch (err: unknown) { // エラーの型を any にして簡易的に扱います
+    } catch (err: unknown) {
       console.error('認証エラー:', err);
       let errorMessage = '認証に失敗しました。';
-      if (err.code) {
-        switch (err.code) {
+
+      if (
+        typeof err === 'object' &&
+        err !== null &&
+        'code' in err &&
+        typeof (err as { code: unknown }).code === 'string'
+      ) {
+        const code = (err as { code: string }).code;
+
+        switch (code) {
           case 'auth/email-already-in-use':
             errorMessage = 'このメールアドレスは既に使用されています。';
             break;
@@ -50,12 +58,14 @@ export default function AuthForm() {
             errorMessage = '何度も失敗したため、一時的にアカウントがロックされました。しばらくしてからお試しください。';
             break;
           default:
-            errorMessage = `認証エラー: ${err.message}`;
+            errorMessage = `認証エラー: ${(err as any).message}`;
             break;
         }
       }
+
       setError(errorMessage);
     }
+
   };
 
   return (
