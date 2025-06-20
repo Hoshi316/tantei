@@ -9,6 +9,9 @@ import FoundModal from '../components/FoundModal'
 import CaseNotebook from '@/components/CaseNotebook'
 import Link from 'next/link'
 import Image from 'next/image' // Image コンポーネントをインポート
+import { useRouter } from 'next/navigation'
+import { useAuth } from '@/context/AuthContext'
+
 
 const questions = [
   '何を失くしましたか？',
@@ -21,11 +24,15 @@ const questions = [
 ]
 
 export default function MainAppPage() {
+  const [isMemoOpen, setIsMemoOpen] = useState(false);
+  const { user, loading } = useAuth()
+  const router = useRouter()
   const [assistantFace, setAssistantFace] = useState('/assistant-default.png')
 
   const [step, setStep] = useState(0)
   const [answers, setAnswers] = useState<string[]>([])
   const [input, setInput] = useState('')
+
 
   // suggestion ステートは conversation で代替可能ですが、
   // エラーになっているので、ここでは一旦、会話履歴から直接テキストを取得するように変更し、
@@ -39,6 +46,20 @@ export default function MainAppPage() {
   const [conversation, setConversation] = useState<
     { type: 'question' | 'advice' | 'completion', text: string } | null
   >(null);
+
+    useEffect(() => {
+    if (!loading && !user) { // ロードが完了していて、ユーザーがログインしていない場合
+      router.push('/login') // ログインページにリダイレクト
+    }
+  }, [user, loading, router])
+
+
+  // 初期質問を会話履歴に追加 (初回の質問のみ)
+  useEffect(() => {
+    if (conversation === null && step === 0) {
+      setConversation({ type: 'question', text: questions[0] });
+    }
+  }, [step]);
 
   const handleSubmit = async () => {
     if (!input.trim()) return
@@ -125,26 +146,37 @@ export default function MainAppPage() {
     }
   };
 
+  // ★★★ リセット系関数の共通ロジック ★★★
+  const resetAllStates = () => {
+    localStorage.removeItem('answers');
+    localStorage.removeItem('step');
+    setAnswers([]);
+    setStep(0);
+    setInput('');
+    setConversation({ type: 'question', text: questions[0] });
+
+  };
+
 
   const handleFoundSave = async (location: string, memo: string) => {
-    const data = {
+  // ★★★ user が null でないことを保証 ★★★
+    if (!user) { // userが存在しない場合はエラーまたはリダイレクトされているはずだが念のため
+      alert('ログインしていません。');
+      return;
+    }
+        const data = {
       createdAt: Timestamp.now(),
       answers,
       foundLocation: location,
       foundMemo: memo,
-    }
+      userId: user.uid, // ★★★ user.uid を保存 ★★★
+    };
 
     try {
       // await addDoc(collection(db, 'cases'), data) の戻り値を使わないのであれば変数宣言しない
       await addDoc(collection(db, 'cases'), data)
       alert('事件簿に保存しました！')
-      localStorage.removeItem('answers')
-      localStorage.removeItem('step')
-      setAnswers([])
-      setStep(0)
-      setInput('')
-      setConversation({ type: 'question', text: questions[0] });
-      // setSuggestion(null) // suggestion ステートが削除されるため、この行も削除
+       resetAllStates();
     } catch (error: unknown) { // error を unknown に変更し、anyを避ける
       console.error('保存失敗:', error)
       alert('保存に失敗しました...')
@@ -153,13 +185,7 @@ export default function MainAppPage() {
 
   const handleReset = () => {
     if (confirm('本当にリセットしますか？')) {
-      localStorage.removeItem('answers')
-      localStorage.removeItem('step')
-      setAnswers([])
-      setStep(0)
-      setInput('')
-        setConversation({ type: 'question', text: questions[0] });
-      // setSuggestion(null) // suggestion ステートが削除されるため、この行も削除
+   resetAllStates(); // ★★★ 共通リセットロジックを呼び出し ★★★
     }
   }
 
@@ -184,99 +210,134 @@ export default function MainAppPage() {
     }
   };
 
+     // ★★★ ユーザーがログインしていない間はローディング表示 ★★★
+  if (loading || !user) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gray-50">
+        <p>読み込み中、またはログインページへリダイレクト中...</p>
+      </div>
+    );
+  }
 
   return (
     <main
-      className="min-h-screen p-4 flex flex-col items-center relative font-sans bg-cover bg-center"
+      className="min-h-screen flex flex-col items-center justify-between relative font-sans bg-cover bg-center pb-4" // padding-bottom を追加して最下部の要素が隠れないように
       style={{ backgroundImage: "url('/background-main.jpg')" }}
     >
-      <div className="absolute top-4 left-4 z-20">
-        <Link href="/" className="text-blue-500 hover:underline">
+      {/* 上部固定要素群 */}
+      <div className="w-full flex justify-between items-start p-4 z-20 absolute top-0 left-0">
+        <Link href="/" className="text-blue-500 hover:underline px-2 py-1 bg-white bg-opacity-80 rounded shadow-sm">
           &lt; ホームに戻る
         </Link>
-      </div>
-
-      <div className="absolute top-4 right-4 bg-white shadow-lg rounded p-3 w-60 text-sm border">
-        <h2 className="font-semibold mb-2">📝 捜査メモ</h2>
-        <ul className="list-disc list-inside space-y-1">
-          {answers.map((a, i) => (
-            <li key={i}>
-              <strong>{questions[i]}：</strong> {a}
-            </li>
-          ))}
-        </ul>
-      </div>
-
-      {/* imgタグをNext.jsのImageコンポーネントに置き換え */}
-      <Image
-        src={assistantFace}
-        alt="助手"
-        className="fixed bottom-0 left-[40%] transform -translate-x-1/2 z-10 w-[400px] md:w-[520px] h-auto pointer-events-none select-none"
-        width={520} // 最大幅を指定（md:w-[520px]から）
-        height={520} // heightも指定（widthと同じ値でアスペクト比を維持）
-        priority // LCPに関連するため優先的にロード
-        sizes="(max-width: 768px) 400px, 520px" // レスポンシブ画像のためのsizes属性
-      />
-
-      {/* ★★★ 助手の会話とアドバイスの表示領域 (単一の吹き出し) */}
-  {conversation && (
-        <div className="relative bg-white bg-opacity-90 rounded-xl shadow-lg p-4 max-w-md w-70 z-20 mt-60"> {/* max-w-mdに変更、p-4、rounded-xlを維持、z-20を維持 */}
-          {/* 吹き出しのしっぽ */}
-{/* top-full を bottom-full に、border-t-8 を border-b-8 に変更 */}
-          <div className="absolute bottom-full left-8 transform -translate-x-1/2 mt-1 w-0 h-0 border-x-8 border-x-transparent border-b-8 border-b-white"></div>
-
-          {(conversation.type === 'question' || conversation.type === 'advice') && (
-            <p> 助手：{conversation.text}</p>
-          )}
-          {conversation.type === 'completion' && (
-              <p className="text-center text-gray-600 italic py-2">
-                  {conversation.text}
-              </p>
+        {/* 捜査メモ (アコーディオン形式) */}
+        <div className="bg-white shadow-lg rounded text-sm border bg-opacity-90 w-64 md:w-72"> {/* 幅を調整 */}
+          <button
+            onClick={() => setIsMemoOpen(!isMemoOpen)}
+            className="flex justify-between items-center w-full p-3 font-semibold text-gray-900 focus:outline-none"
+          >
+            <span>📝 捜査メモ</span>
+            <span>{isMemoOpen ? '▲' : '▼'}</span>
+          </button>
+          {isMemoOpen && (
+            <div className="p-3 pt-0 border-t border-gray-200">
+              <ul className="list-disc list-inside space-y-1 max-h-40 overflow-y-auto">
+                {answers.length > 0 ? (
+                  answers.map((a, i) => (
+                    <li key={i}>
+                      <strong>{questions[i]}：</strong> {a}
+                    </li>
+                  ))
+                ) : (
+                  <li className="text-gray-600 italic">まだメモはありません。</li>
+                )}
+              </ul>
+            </div>
           )}
         </div>
-      )}
-      {/* ★★★ 統合表示終わり ★★★ */}
+      </div>
 
+      {/* 助手の画像と会話吹き出しのコンテナ */}
+      <div className="flex flex-col items-center mt-20 md:mt-32 mb-auto z-20"> {/* 上部のスペース確保と下部への追いやられ防止 */}
+        <Image
+          src={assistantFace}
+          alt="助手"
+          className="w-[150px] h-auto md:w-[250px] pointer-events-none select-none mb-2" // 縦のスペースを抑えるため margin-bottom を追加
+          width={250}
+          height={250}
+          priority
+          sizes="(max-width: 768px) 150px, 250px"
+        />
 
-      {step < questions.length && (
-        <div className="w-full max-w-md flex gap-2 mt-auto mb-4 z-20">
-          <input
-            type="text"
-            value={input}
-            onChange={(e) => setInput(e.target.value)}
-            className="border p-2 flex-1 rounded bg-white text-black"
-            placeholder="答えてね"
-          />
+        {conversation && (
+          <div className="relative bg-white bg-opacity-90 rounded-xl shadow-lg p-3 max-w-xs w-full text-center max-h-[120px] overflow-y-auto">
+            <div className="absolute top-full left-1/2 transform -translate-x-1/2 mt-1 w-0 h-0 border-x-8 border-x-transparent border-t-8 border-t-white"></div>
+            {(conversation.type === 'question' || conversation.type === 'advice') && (
+              <p className="text-sm">助手：{conversation.text}</p>
+            )}
+            {conversation.type === 'completion' && (
+                <p className="text-center text-gray-600 italic text-sm py-1">
+                    {conversation.text}
+                </p>
+            )}
+          </div>
+        )}
+      </div>
 
-          <button
-            onClick={handleSubmit}
-            className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600 z-20"
-          >
-            送信
-          </button>
+      {/* 入力フォームと主要ボタン群 (下部固定) */}
+      <div className="w-full bg-white bg-opacity-95 p-4 shadow-lg z-30">
+        {step < questions.length && (
+          <div className="flex gap-2 mb-2 w-full max-w-md mx-auto">
+            <input
+              type="text"
+              value={input}
+              onChange={(e) => setInput(e.target.value)}
+              className="border p-2 flex-1 rounded bg-white text-black text-sm"
+              placeholder="答えてね"
+            />
+            <button
+              onClick={handleSubmit}
+              className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600 text-sm"
+            >
+              送信
+            </button>
+          </div>
+        )}
+
+        <div className="flex flex-col items-center space-y-2 max-w-md mx-auto">
+          {answers.length > 0 && (
+            <>
+              <button
+                onClick={getAdvice}
+                disabled={loadingAdvice}
+                className="w-full bg-purple-500 text-white px-4 py-2 rounded hover:bg-purple-600 disabled:opacity-50 text-sm"
+              >
+                🔍 アドバイスをもらう
+              </button>
+              <button
+                onClick={() => setShowFoundModal(true)}
+                className="w-full bg-green-500 text-white px-4 py-2 rounded hover:bg-green-600 text-sm"
+              >
+                ✅ 見つかった！事件簿に記録する
+              </button>
+            </>
+          )}
+
+          <div className="flex gap-4 mt-2">
+            <button
+              onClick={handleReset}
+              className="text-xs text-gray-500 underline hover:text-red-500"
+            >
+              🔄 リセット
+            </button>
+            <button
+              onClick={handleBack}
+              className="text-xs text-gray-500 underline hover:text-blue-500"
+            >
+              ◀ 戻る
+            </button>
+          </div>
         </div>
-      )}
-
-      {answers.length > 0 && (
-        <div className="mt-4 flex flex-col items-center z-20">
-          <button
-            onClick={getAdvice}
-            disabled={loadingAdvice}
-            className="bg-purple-500 text-white px-4 py-2 rounded hover:bg-purple-600 disabled:opacity-50 z-20"
-          >
-            🔍 アドバイスをもらう
-          </button>
-        </div>
-      )}
-
-      {answers.length > 0 && (
-        <button
-          onClick={() => setShowFoundModal(true)}
-          className="mt-4 bg-green-500 text-white px-4 py-2 rounded hover:bg-green-600 z-20"
-        >
-          ✅ 見つかった！事件簿に記録する
-        </button>
-      )}
+      </div>
 
       <FoundModal
         open={showFoundModal}
@@ -284,26 +345,10 @@ export default function MainAppPage() {
         onSave={handleFoundSave}
       />
 
-      {/* ★★★ CaseNotebook コンポーネントを配置し、fixedで右下に固定 ★★★ */}
-      {/* CaseNotebook.tsxにもimgタグがあれば同様にImageコンポーネントに修正が必要です */}
-      <div className="fixed right-4 top-[140px] z-20 md:bottom-4 md:top-auto">
+      {/* CaseNotebook コンポーネント (PCのみ表示) */}
+      <div className="hidden md:block fixed right-4 top-[140px] z-20">
           <CaseNotebook />
       </div>
-
-
-      <button
-        onClick={handleReset}
-        className="text-sm text-gray-500 underline hover:text-red-500 mt-2 z-20"
-      >
-        🔄 リセットする
-      </button>
-
-      <button
-        onClick={handleBack}
-        className="text-sm text-gray-500 underline hover:text-blue-500 mt-2 z-20"
-      >
-        ◀ ひとつ前に戻る
-      </button>
     </main>
   )
 }

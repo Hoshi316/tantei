@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Kaisei_Opti } from "next/font/google";
 import "./globals.css";
+import { AuthProvider } from '@/context/AuthContext'; 
 
 const kaiseiOpti = Kaisei_Opti({
   weight: ["400", "700"], // Kaisei Opti で利用可能なウェイトを指定。Google Fontsで確認
@@ -23,8 +24,9 @@ export default function RootLayout({
     <html lang="en">
       <body
         className={`${kaiseiOpti.variable} antialiased`}
-      >
+      ><AuthProvider>
         {children}
+        </AuthProvider>
       </body>
     </html>
   );
