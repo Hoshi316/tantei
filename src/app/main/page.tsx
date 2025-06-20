@@ -191,11 +191,10 @@ export default function MainAppPage() {
     const data = {
       createdAt: Timestamp.now(),
       answers,
-      status: 'found',
+      status: 'resolved',
       foundLocation: location,
       foundMemo: memo,
       userId: user.uid,
-      status: 'resolved',
     };
 
     console.log('保存しようとしてるデータ:', data);
