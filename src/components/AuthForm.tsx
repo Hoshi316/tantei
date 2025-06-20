@@ -58,7 +58,11 @@ export default function AuthForm() {
             errorMessage = '何度も失敗したため、一時的にアカウントがロックされました。しばらくしてからお試しください。';
             break;
           default:
-            errorMessage = `認証エラー: ${(err as any).message}`;
+            if ('message' in err && typeof err.message === 'string') {
+              errorMessage = `認証エラー: ${err.message}`;
+            } else {
+              errorMessage = '予期せぬエラーが発生しました。';
+            }
             break;
         }
       }
