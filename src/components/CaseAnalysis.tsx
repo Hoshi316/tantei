@@ -1,8 +1,9 @@
 'use client'
 
 import { useEffect, useState } from 'react'
+import { CaseData } from '@/types/case';
 
-export default function CaseAnalysis({ cases }: { cases: any[] }) {
+export default function CaseAnalysis({ cases }: { cases: CaseData[] }) {
   const [summary, setSummary] = useState<string | null>(null)
 
   const lostItems = cases.map(c => c.answers?.[0]).filter(Boolean)
