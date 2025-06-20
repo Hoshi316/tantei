@@ -6,4 +6,5 @@ export interface CaseData {
   answers: string[];
   foundLocation?: string;
   foundMemo?: string;
+   status: 'found' | 'pending';
 }

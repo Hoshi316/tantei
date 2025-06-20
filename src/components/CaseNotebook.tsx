@@ -5,7 +5,8 @@ import { useState, useEffect } from "react"
 import CaseList from "./CaseList"
 import CaseAnalysis from "./CaseAnalysis"
 import { db } from '@/lib/firebase'
-import { collection, query, orderBy, getDocs, where} from 'firebase/firestore'
+import { collection, query, orderBy} from 'firebase/firestore'
+import { onSnapshot } from 'firebase/firestore'
 import { useAuth } from '@/context/AuthContext' // 追加
 import { CaseData } from '@/types/case';
 import Image from 'next/image'
@@ -18,55 +19,55 @@ export default function CaseNotebook() { // ★★★ propsからcasesを削除 
   const [loadingCases, setLoadingCases] = useState(false)
 
   useEffect(() => {
-    let unsubscribe: NodeJS.Timeout | null = null;
+    let unsubscribe: (() => void) | undefined; // onSnapshotの返り値はクリーンアップ関数
 
-    const fetchCases = async () => {
-      if (!user) return;
-      setLoadingCases(true);
-      try {
-        const q = query(
-          collection(db, 'cases'),
-          where('userId', '==', user.uid),
-          orderBy('createdAt', 'desc')
-        );
-        const snapshot = await getDocs(q);
+    if (showNotebook && user) { // モーダルが開いていて、ユーザーがログインしている場合のみ
+      setLoadingCases(true); // ロード開始
+
+      const q = query(
+        collection(db, 'users', user.uid, 'cases'), // users/{userId}/cases に保存されているはず
+        orderBy('createdAt', 'desc')
+      );
+
+      // onSnapshot でリアルタイムリスナーを設定
+      unsubscribe = onSnapshot(q, (snapshot) => {
         const items = snapshot.docs.map(doc => doc.data() as CaseData);
         setCases(items);
-      } catch (error) {
-        console.error('事件簿データの取得に失敗しました:', error);
-      } finally {
-        setLoadingCases(false);
-      }
-    };
-
-    if (showNotebook) {
-      fetchCases(); // 初回取得
-      unsubscribe = setInterval(fetchCases, 3000); // 3秒ごとに再取得
+        setLoadingCases(false); // データ取得完了
+      }, (error) => {
+        console.error('事件簿データのリアルタイム取得失敗:', error);
+        setLoadingCases(false); // エラー時もロード完了
+      });
     }
 
+    // クリーンアップ関数: コンポーネントがアンマウントされるか、依存配列が変わる前にリスナーを停止
     return () => {
-      if (unsubscribe) clearInterval(unsubscribe);
+      if (unsubscribe) unsubscribe();
     };
   }, [showNotebook, user]);
 
 
   return (
     <>
-      {/* ★★★ 事件簿を開く画像ボタン ★★★ */}
+   {/* 事件簿を開く画像ボタン */}
       <button
-        onClick={() => setShowNotebook(true)} // モーダル表示を制御
+        onClick={() => setShowNotebook(true)}
         className="inline-block bg-transparent border-0 p-0 shadow-none hover:opacity-80 transition-opacity duration-300"
         aria-label="事件簿を開く"
       >
-        <Image
-          src="/file.PNG"
-          alt="事件簿を開く"
-          width={160} // md:w-40 に相当（40×4 = 160px）
-          height={160} // 高さは適当でOK。画像のアスペクト比に合わせて調整される
-          className="w-24 h-auto md:w-40"
-          priority
-        />
-
+        {/* ★★★ ここを修正 ★★★ */}
+        {/* Image コンポーネントの親にサイズを定義し、Imageには fill を使う */}
+        <div className="relative w-24 h-24 md:w-40 md:h-40"> {/* ★親のdivにレスポンシブサイズを定義★ */}
+            <Image
+                src="/file.PNG"
+                alt="事件簿を開く"
+                fill // ★★★ fill プロパティを追加 ★★★
+                className="object-contain" // ★★★ object-contain を追加して画像がdivに収まるように ★★★
+                priority
+                // width, height, className="w-..." は全てここから削除
+                // sizes属性も不要になる
+            />
+        </div>
       </button>
 
       {/* 事件簿一覧/分析のモーダル */}

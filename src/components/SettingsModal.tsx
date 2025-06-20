@@ -40,7 +40,7 @@ export default function SettingsModal({ open, onClose }: SettingsModalProps) {
         </button>
 
         <div className="mb-4">
-          <h3 className="text-gray-700 font-semibold mb-2">背景音楽</h3>
+          <h3 className="text-gray-700 font-semibold mb-2">BGM選択</h3>
           <div className="flex flex-col space-y-2">
             <label className="flex items-center space-x-2">
               <input
