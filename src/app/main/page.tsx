@@ -4,7 +4,6 @@
 import { useState, useEffect } from 'react' // useRef をインポート
 import { db } from '@/lib/firebase'
 import { collection, addDoc, Timestamp } from 'firebase/firestore'
-import SaveModal from './components/SaveModal'
 import FoundModal from '../components/FoundModal'
 import CaseNotebook from '@/components/CaseNotebook'
 import Link from 'next/link'

@@ -54,8 +54,8 @@ export default function CaseNotebook() { // ★★★ propsからcasesを削除 
         <div className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center z-50">
           <div className="relative bg-white p-6 rounded-lg w-[700px] h-[500px] shadow-lg font-sans">
             {/* 閉じるボタン */}
-            <button
-              className="absolute top-2 right-2 text-gray-500 hover:text-gray-800 text-2xl"
+             <button
+              className="absolute top-2 right-2 text-gray-500 hover:text-gray-800 text-2xl z-50" // ★★★ z-50 を追加して一番上にする ★★★
               onClick={() => setShowNotebook(false)}
             >
               ×
