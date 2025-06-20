@@ -32,6 +32,7 @@ export default function MainAppPage() {
   const [input, setInput] = useState('')
   const [loadingAdvice, setLoadingAdvice] = useState(false)
   const [showFoundModal, setShowFoundModal] = useState(false)
+
   const [conversation, setConversation] = useState<
     { type: 'question' | 'advice' | 'completion', text: string } | null
   >(null);
@@ -41,6 +42,32 @@ export default function MainAppPage() {
       router.push('/login')
     }
   }, [user, loading, router])
+
+   //  メイン画面ロード時にBGMを再生する
+  useEffect(() => {
+    const savedBgmSetting = localStorage.getItem('selectedBgm');
+    const bgmA = document.getElementById('bgm-A') as HTMLAudioElement;
+    const bgmB = document.getElementById('bgm-B') as HTMLAudioElement;
+
+    // まず全てのBGMを停止
+    const stopAllBgm = () => {
+      if (bgmA) bgmA.pause();
+      if (bgmB) bgmB.pause();
+    };
+    stopAllBgm();
+
+    // 設定に基づいて再生
+    if (savedBgmSetting === 'bgm-A' && bgmA) {
+      bgmA.play().catch(e => console.error("BGM A再生失敗 (main page):", e));
+    } else if (savedBgmSetting === 'bgm-B' && bgmB) {
+      bgmB.play().catch(e => console.error("BGM B再生失敗 (main page):", e));
+    }
+
+    // クリーンアップ関数: このページを離れるときにBGMを停止
+    return () => {
+      stopAllBgm();
+    };
+  }, []); 
 
   useEffect(() => {
     if (conversation === null && step === 0) {
@@ -139,6 +166,8 @@ export default function MainAppPage() {
       userId: user.uid,
     };
 
+    console.log('保存しようとしてるデータ:', data);
+
     try {
       await addDoc(collection(db, collectionName), data)
       alert('事件簿に保存しました！')
@@ -236,6 +265,9 @@ export default function MainAppPage() {
       {user && (
         <button onClick={handleSignOut} className="text-sm text-gray-500 underline hover:text-orange-500 mt-2 z-20">🚪 ログアウト</button>
       )}
+
+
+
     </main>
   )
 }

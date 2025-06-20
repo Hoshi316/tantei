@@ -25,6 +25,8 @@ export default function RootLayout({
       <body
         className={`${kaiseiOpti.variable} antialiased`}
       ><AuthProvider>
+        <audio id="bgm-A" src="/5.mp3" loop></audio>
+<audio id="bgm-B" src="/mei.mp3" loop></audio>
         {children}
         </AuthProvider>
       </body>

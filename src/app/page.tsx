@@ -3,8 +3,12 @@
 
 import Link from 'next/link'
 import CaseNotebook from '@/components/CaseNotebook' // CaseNotebookをインポート
+import SettingsModal from '@/components/SettingsModal'; // ★★★ SettingsModalをインポート ★★★
+import { useState } from 'react'; // ★★★ useStateをインポート（もし既にないなら） ★★★
+
 
 export default function WelcomePage() {
+  const [showSettingsModal, setShowSettingsModal] = useState(false);
   return (
     <main
   className="min-h-screen p-4 flex flex-col items-center relative font-sans bg-cover bg-center"
@@ -19,6 +23,13 @@ export default function WelcomePage() {
         <p className="text-xl text-gray-700 mb-10 max-w-4xl text-white mx-auto">
           怪盗に隠されたものを探すため、助手と一緒に事件を整理していきましょう！
         </p>
+        
+         <button
+          onClick={() => setShowSettingsModal(true)}
+          className="absolute top-4 left-4 bg-gray-200 text-gray-700 px-3 py-1 rounded-full shadow hover:bg-gray-300 text-sm z-30"
+        >
+          ⚙️ 設定
+        </button>
 
         {/* ボタン群のコンテナ */}
         <div className="flex flex-col gap-8 mb-12 items-center">
@@ -36,6 +47,13 @@ export default function WelcomePage() {
           <p>&copy; 2025 Lost Finder App</p>
         </div>
       </div>
+
+            {/* ★★★ SettingsModal を呼び出す ★★★ */}
+      <SettingsModal
+        open={showSettingsModal}
+        onClose={() => setShowSettingsModal(false)}
+      />
+      
     </main>
   )
 }
