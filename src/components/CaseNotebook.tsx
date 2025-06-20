@@ -5,11 +5,13 @@ import { useState, useEffect } from "react"
 import CaseList from "./CaseList"
 import CaseAnalysis from "./CaseAnalysis"
 import { db } from '@/lib/firebase'
-import { collection, query, orderBy, getDocs } from 'firebase/firestore'
+import { collection, query, orderBy, getDocs, where} from 'firebase/firestore'
+import { useAuth } from '@/context/AuthContext' // 追加
 import { CaseData } from '@/types/case';
 import Image from 'next/image'
 
 export default function CaseNotebook() { // ★★★ propsからcasesを削除 ★★★
+  const { user } = useAuth() // 追加
   const [activePage, setActivePage] = useState<'list' | 'analysis'>('list')
   const [showNotebook, setShowNotebook] = useState(false) // モーダルの表示状態
   const [cases, setCases] = useState<CaseData[]>([]) // ★★★ データをここで管理 ★★★
@@ -17,9 +19,14 @@ export default function CaseNotebook() { // ★★★ propsからcasesを削除 
 
   useEffect(() => {
     const fetchCases = async () => {
+      if (!user) return;
       setLoadingCases(true)
       try {
-        const q = query(collection(db, 'cases'), orderBy('createdAt', 'desc'))
+        const q = query(
+          collection(db, 'cases'), 
+          where('userId', '==', user.uid),
+          orderBy('createdAt', 'desc')
+        )
         const snapshot = await getDocs(q)
         const items = snapshot.docs.map(doc => doc.data() as CaseData)
         setCases(items)
@@ -33,7 +40,7 @@ export default function CaseNotebook() { // ★★★ propsからcasesを削除 
     if (showNotebook) {
       fetchCases() // showNotebook が true になったらデータをフェッチ
     }
-  }, [showNotebook])
+  }, [showNotebook, user])
 
   return (
     <>

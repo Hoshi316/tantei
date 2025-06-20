@@ -128,7 +128,8 @@ export default function MainAppPage() {
       return;
     }
 
-    const q = query(collection(db, 'cases'), where('userId', '==', user.uid));
+    const collectionName = process.env.NODE_ENV === 'development' ? 'cases-dev' : 'cases';
+    const q = query(collection(db, collectionName), where('userId', '==', user.uid));
     const existing = await getDocs(q);
     if (!existing.empty) {
       alert('すでに事件簿が存在します。');
@@ -144,7 +145,7 @@ export default function MainAppPage() {
     };
 
     try {
-      await addDoc(collection(db, 'cases'), data)
+      await addDoc(collection(db, collectionName), data)
       alert('事件簿に保存しました！')
       resetAllStates();
     } catch (error: unknown) {
