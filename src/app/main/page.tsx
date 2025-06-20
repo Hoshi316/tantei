@@ -28,7 +28,7 @@ const questions = [
 ]
 
 export default function MainAppPage() {
-  const [isMemoOpen, setIsMemoOpen] = useState(false);
+  
   const { user, loading } = useAuth()
   const router = useRouter()
   const [assistantFace, setAssistantFace] = useState('/assistant-default.png')

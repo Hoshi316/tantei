@@ -7,6 +7,7 @@ import CaseAnalysis from "./CaseAnalysis"
 import { db } from '@/lib/firebase'
 import { collection, query, orderBy, getDocs } from 'firebase/firestore'
 import { CaseData } from '@/types/case';
+import Image from 'next/image'
 
 export default function CaseNotebook() { // ★★★ propsからcasesを削除 ★★★
   const [activePage, setActivePage] = useState<'list' | 'analysis'>('list')
@@ -42,11 +43,15 @@ export default function CaseNotebook() { // ★★★ propsからcasesを削除 
         className="inline-block bg-transparent border-0 p-0 shadow-none hover:opacity-80 transition-opacity duration-300"
         aria-label="事件簿を開く"
       >
-        <img
-          src="/file.PNG" // publicディレクトリからのパス
+        <Image
+          src="/file.PNG"
           alt="事件簿を開く"
-          className="w-24 h-auto md:w-40" // 画像のサイズを調整
+          width={160} // md:w-40 に相当（40×4 = 160px）
+          height={160} // 高さは適当でOK。画像のアスペクト比に合わせて調整される
+          className="w-24 h-auto md:w-40"
+          priority
         />
+
       </button>
 
       {/* 事件簿一覧/分析のモーダル */}

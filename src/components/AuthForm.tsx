@@ -28,7 +28,7 @@ export default function AuthForm() {
         alert('ログインしました！');
       }
       router.push('/main'); // ログインまたは登録が成功したらメインページにリダイレクト
-    } catch (err: any) { // エラーの型を any にして簡易的に扱います
+    } catch (err: unknown) { // エラーの型を any にして簡易的に扱います
       console.error('認証エラー:', err);
       let errorMessage = '認証に失敗しました。';
       if (err.code) {
