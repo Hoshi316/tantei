@@ -3,7 +3,7 @@
 
 import { useState, useEffect } from 'react'
 import { db } from '@/lib/firebase'
-import { collection, addDoc, Timestamp, query, where, getDocs } from 'firebase/firestore'
+import { collection, addDoc, Timestamp } from 'firebase/firestore'
 import FoundModal from '../components/FoundModal'
 import CaseNotebook from '@/components/CaseNotebook'
 import Link from 'next/link'
