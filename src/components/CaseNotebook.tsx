@@ -13,7 +13,7 @@ import Image from 'next/image'
 
 export default function CaseNotebook() { // ★★★ propsからcasesを削除 ★★★
   const { user } = useAuth() // 追加
-  const [activePage, setActivePage] = useState<'list' | 'analysis'>('list')
+  const [activePage, setActivePage] = useState<'list' | 'pending' | 'analysis'>('list')
   const [showNotebook, setShowNotebook] = useState(false) // モーダルの表示状態
   const [cases, setCases] = useState<CaseData[]>([]) // ★★★ データをここで管理 ★★★
   const [loadingCases, setLoadingCases] = useState(false)
@@ -88,8 +88,10 @@ export default function CaseNotebook() { // ★★★ propsからcasesを削除 
                   <p className="text-gray-600">事件簿を読み込み中...</p>
               ) : (
                   <>
-                      {activePage === 'list' && <CaseList cases={cases} />}
+                      {activePage === 'list' && <CaseList cases={cases.filter(c => c.status !== 'pending')} />}
+                      {activePage === 'pending' && <CaseList cases={cases.filter(c => c.status === 'pending')} />}
                       {activePage === 'analysis' && <CaseAnalysis cases={cases} />}
+
                   </>
               )}
             </div>
@@ -100,7 +102,13 @@ export default function CaseNotebook() { // ★★★ propsからcasesを削除 
                 onClick={() => setActivePage('list')}
                 className={`bg-yellow-300 px-2 py-1 rounded-l shadow hover:bg-yellow-400 text-sm ${activePage === 'list' ? 'font-bold' : ''}`}
               >
-                📄 一覧
+                ✅ 解決済み
+              </button>
+              <button
+                onClick={() => setActivePage('pending')}
+                className={`bg-orange-300 px-2 py-1 rounded-l shadow hover:bg-orange-400 text-sm ${activePage === 'pending' ? 'font-bold' : ''}`}
+              >
+                🔍 探索中
               </button>
               <button
                 onClick={() => setActivePage('analysis')}

@@ -195,6 +195,7 @@ export default function MainAppPage() {
       foundLocation: location,
       foundMemo: memo,
       userId: user.uid,
+      status: 'resolved',
     };
 
     console.log('保存しようとしてるデータ:', data);
