@@ -1,12 +1,14 @@
 // src/app/main/page.tsx
 'use client'
 
-import { useState, useEffect } from 'react' // useRef をインポート
+import { useState, useEffect } from 'react'
 import { db } from '@/lib/firebase'
 import { collection, addDoc, Timestamp } from 'firebase/firestore'
+// SaveModal のインポートはすでに削除されていますね、OKです。
 import FoundModal from '../components/FoundModal'
 import CaseNotebook from '@/components/CaseNotebook'
 import Link from 'next/link'
+import Image from 'next/image' // Image コンポーネントをインポート
 
 const questions = [
   '何を失くしましたか？',
@@ -25,41 +27,45 @@ export default function MainAppPage() {
   const [answers, setAnswers] = useState<string[]>([])
   const [input, setInput] = useState('')
 
-  const [suggestion, setSuggestion] = useState<string | null>(null) // アドバイス取得中用
+  // suggestion ステートは conversation で代替可能ですが、
+  // エラーになっているので、ここでは一旦、会話履歴から直接テキストを取得するように変更し、
+  // suggestion ステート自体は完全に削除します。
+  // const [suggestion, setSuggestion] = useState<string | null>(null); // ← この行を削除
+
   const [loadingAdvice, setLoadingAdvice] = useState(false)
 
   const [showFoundModal, setShowFoundModal] = useState(false)
 
- 
   const [conversation, setConversation] = useState<
     { type: 'question' | 'advice' | 'completion', text: string } | null
-  >(null); 
+  >(null);
 
   const handleSubmit = async () => {
     if (!input.trim()) return
 
-    const newAnswers = [...answers, input]
+    const newAnswers = [...answers, input] // ユーザーの入力テキストも answers に含める
     setAnswers(newAnswers)
 
-    let currentReaction = ''
+    // currentReaction も未使用のため、処理から削除
+    // res も未使用のため、try ブロック内の定義と catch の err: any を修正
     try {
-      const res = await fetch('/api/react', {
+      // APIからresponseは受け取るが、その中身（res自体）を使わないのであれば、変数宣言しない
+      await fetch('/api/react', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ answer: input })
       })
-      const data = await res.json()
-      currentReaction = data.reaction
-    } catch (err) {
-      currentReaction = '…なるほど、' // APIエラー時のデフォルトリアクション
-    }
-
-    // ユーザーの入力テキスト（リアクション）は会話履歴には追加しない
+      // const data = await res.json() はresが未使用なので不要
+    } catch (_err: unknown) {
+        console.error('handleSubmit APIコールエラー:', _err); // _err を使うように変更
+        // currentReaction は未使用なので、この行は不要
+        // currentReaction = '…なるほど、' 
+      }
 
     setInput('');
     const nextStep = step + 1;
 
-  // ★★★ 次の質問があれば conversation を上書き ★★★
+    // ★★★ 次の質問があれば conversation を上書き ★★★
     if (nextStep < questions.length) {
       setConversation({ type: 'question', text: questions[nextStep] });
     } else {
@@ -85,7 +91,7 @@ export default function MainAppPage() {
         setConversation({ type: 'completion', text: '質問完了！お疲れさまでした' });
       }
       // アドバイスの状態はリセット
-      setSuggestion(null);
+      // setSuggestion(null); // suggestion ステートが削除されるため、この行も削除
     }
   }, []);
 
@@ -107,9 +113,9 @@ export default function MainAppPage() {
       const data = await res.json()
     // ★★★ アドバイスで conversation を上書き ★★★
       setConversation({ type: 'advice', text: data.suggestion });
-      setSuggestion(data.suggestion); // suggestion ステートはまだ利用できます
-    } catch (err) {
-      console.error('アドバイス取得失敗:', err)
+      // setSuggestion(data.suggestion); // suggestion ステートが削除されるため、この行も削除
+    } catch (_err: unknown) { // err を _err に変更し、型を unknown にしてanyを避ける
+      console.error('アドバイス取得失敗:', _err) // エラーログは残す
       alert('アドバイス取得に失敗しました')
       // エラー時も会話履歴にメッセージで上書き
       setConversation({ type: 'advice', text: 'アドバイス取得に失敗しました。' });
@@ -129,6 +135,7 @@ export default function MainAppPage() {
     }
 
     try {
+      // await addDoc(collection(db, 'cases'), data) の戻り値を使わないのであれば変数宣言しない
       await addDoc(collection(db, 'cases'), data)
       alert('事件簿に保存しました！')
       localStorage.removeItem('answers')
@@ -137,8 +144,8 @@ export default function MainAppPage() {
       setStep(0)
       setInput('')
       setConversation({ type: 'question', text: questions[0] });
-      setSuggestion(null)
-    } catch (error) {
+      // setSuggestion(null) // suggestion ステートが削除されるため、この行も削除
+    } catch (error: unknown) { // error を unknown に変更し、anyを避ける
       console.error('保存失敗:', error)
       alert('保存に失敗しました...')
     }
@@ -152,7 +159,7 @@ export default function MainAppPage() {
       setStep(0)
       setInput('')
         setConversation({ type: 'question', text: questions[0] });
-      setSuggestion(null)
+      // setSuggestion(null) // suggestion ステートが削除されるため、この行も削除
     }
   }
 
@@ -173,10 +180,9 @@ export default function MainAppPage() {
           // 質問が全て終わった後で戻る場合、完了メッセージを表示
           setConversation({ type: 'completion', text: '質問完了！お疲れさまでした' });
       }
-      setSuggestion(null);
+      // setSuggestion(null); // suggestion ステートが削除されるため、この行も削除
     }
   };
-
 
 
   return (
@@ -201,14 +207,19 @@ export default function MainAppPage() {
         </ul>
       </div>
 
-      <img
+      {/* imgタグをNext.jsのImageコンポーネントに置き換え */}
+      <Image
         src={assistantFace}
         alt="助手"
         className="fixed bottom-0 left-[40%] transform -translate-x-1/2 z-10 w-[400px] md:w-[520px] h-auto pointer-events-none select-none"
+        width={520} // 最大幅を指定（md:w-[520px]から）
+        height={520} // heightも指定（widthと同じ値でアスペクト比を維持）
+        priority // LCPに関連するため優先的にロード
+        sizes="(max-width: 768px) 400px, 520px" // レスポンシブ画像のためのsizes属性
       />
 
       {/* ★★★ 助手の会話とアドバイスの表示領域 (単一の吹き出し) */}
-  {conversation && ( 
+  {conversation && (
         <div className="relative bg-white bg-opacity-90 rounded-xl shadow-lg p-4 max-w-md w-70 z-20 mt-60"> {/* max-w-mdに変更、p-4、rounded-xlを維持、z-20を維持 */}
           {/* 吹き出しのしっぽ */}
 {/* top-full を bottom-full に、border-t-8 を border-b-8 に変更 */}
@@ -255,13 +266,6 @@ export default function MainAppPage() {
           >
             🔍 アドバイスをもらう
           </button>
-
-          {/* ★★★ 古いアドバイス表示を削除 ★★★ */}
-          {/* {suggestion && (
-            <p className="mt-2 text-sm text-gray-700 z-20">
-              💡 <strong>助手のアドバイス：</strong> {suggestion}
-            </p>
-          )} */}
         </div>
       )}
 
@@ -281,7 +285,8 @@ export default function MainAppPage() {
       />
 
       {/* ★★★ CaseNotebook コンポーネントを配置し、fixedで右下に固定 ★★★ */}
-      <div className="fixed right-4 top-[140px] z-20 md:bottom-4 md:top-auto"> {/* top-140をtop-[140px]に修正 */}
+      {/* CaseNotebook.tsxにもimgタグがあれば同様にImageコンポーネントに修正が必要です */}
+      <div className="fixed right-4 top-[140px] z-20 md:bottom-4 md:top-auto">
           <CaseNotebook />
       </div>
 

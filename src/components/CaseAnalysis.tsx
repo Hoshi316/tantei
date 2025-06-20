@@ -15,8 +15,10 @@ export default function CaseAnalysis({ cases }: { cases: CaseData[] }) {
       return acc
     }, {} as Record<string, number>)
 
-  const itemStats = count(lostItems)
-  const placeStats = count(foundPlaces)
+  const filteredLostItems: string[] = lostItems.filter((item): item is string => item !== undefined);
+  const itemStats = count(filteredLostItems);
+  const filteredFoundPlaces: string[] = foundPlaces.filter((place): place is string => place !== undefined);
+  const placeStats = count(filteredFoundPlaces);
 
   useEffect(() => {
     const fetchSummary = async () => {
