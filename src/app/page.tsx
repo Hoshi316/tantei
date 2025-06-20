@@ -12,7 +12,7 @@ export default function WelcomePage() {
   return (
     <main
   className="min-h-screen p-4 flex flex-col items-center relative font-sans bg-cover bg-center"
-  style={{ backgroundImage: "url('/background-home.jpg')" }}
+  style={{ backgroundImage: "url('homedesk.jpg')" }}
 >
      
 

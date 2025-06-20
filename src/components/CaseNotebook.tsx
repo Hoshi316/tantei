@@ -52,12 +52,12 @@ export default function CaseNotebook() { // ★★★ propsからcasesを削除 
    {/* 事件簿を開く画像ボタン */}
       <button
         onClick={() => setShowNotebook(true)}
-        className="inline-block bg-transparent border-0 p-0 shadow-none hover:opacity-80 transition-opacity duration-300"
+        className="fixed bottom-24 right-6 bg-transparent border-0 p-0 shadow-none hover:opacity-80 transition-opacity duration-300 z-40"
         aria-label="事件簿を開く"
       >
         {/* ★★★ ここを修正 ★★★ */}
         {/* Image コンポーネントの親にサイズを定義し、Imageには fill を使う */}
-        <div className="relative w-24 h-24 md:w-40 md:h-40"> {/* ★親のdivにレスポンシブサイズを定義★ */}
+        <div className="relative w-60 h-60 md:w-110 md:h-110"> {/* ★親のdivにレスポンシブサイズを定義★ */}
             <Image
                 src="/file.PNG"
                 alt="事件簿を開く"
