@@ -201,6 +201,9 @@ export default function MainAppPage() {
     console.log('保存しようとしてるデータ:', data);
 
     try {
+      console.log('[debug] before addDoc');
+      const ref = collection(db, collectionName);
+      console.log('[debug] collection ref:', ref);
       await addDoc(collection(db, collectionName), data)
       alert('事件簿に保存しました！')
       resetAllStates();
@@ -234,14 +237,17 @@ export default function MainAppPage() {
       console.log('使用中のコレクション名:', collectionName);
 
 
-           try {
-        await addDoc(collection(db, collectionName), data);
-        alert('事件を探索中として事件簿に記録しました！');
-        resetAllStates();
-      } catch (error: unknown) {
-        console.error('保留保存失敗:', error);
-        alert('保留保存に失敗しました...');
-      }
+            try {
+              console.log('[debug] before addDoc');
+              await addDoc(collection(db, collectionName), data);
+              console.log('[debug] after addDoc');
+              alert('事件を探索中として事件簿に記録しました！');
+              resetAllStates();
+            } catch (error: unknown) {
+              console.error('保留保存失敗:', error);
+              alert('保留保存に失敗しました...');
+            }
+
     }
   };
 
