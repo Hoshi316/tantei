@@ -1,3 +1,4 @@
+//tantei-rho.vercel.app
 // src/app/main/page.tsx
 'use client'
 
@@ -215,6 +216,8 @@ export default function MainAppPage() {
         alert('ログインしていません。');
         return;
       }
+
+      console.log('現在のユーザー情報:', user); 
 
       const collectionName = process.env.NODE_ENV === 'development' ? 'cases-dev' : 'cases';
 
