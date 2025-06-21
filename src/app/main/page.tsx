@@ -231,6 +231,8 @@ export default function MainAppPage() {
       };
 
       console.log('保存しようとしてるデータ:', data);
+      console.log('使用中のコレクション名:', collectionName);
+
 
            try {
         await addDoc(collection(db, collectionName), data);

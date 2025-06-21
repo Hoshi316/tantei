@@ -18,5 +18,7 @@ const firebaseConfig = {
 
 const app = !getApps().length ? initializeApp(firebaseConfig) : getApp();
 
+console.log('Firebase App の構成:', getApps()[0]?.options?.projectId);
+
 export const db = getFirestore(app);
 export const auth = getAuth(app);
